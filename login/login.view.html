@@ -1,0 +1,155 @@
+
+<style type="text/css">
+    .forget-form {
+        display: none
+    }
+</style>
+
+<div class="col-md-7 col-md-offset-3">
+    
+    <form name="form" class="login-form" ng-submit="vm.login()" role="form">
+        <h2>Login</h2>
+        <div class="form-group" ng-class="{ 'has-error': form.email.$dirty && form.email.$error.required }">
+            <label>Email</label>
+            <input type="email" name="email" id="email" class="form-control" ng-model="vm.email" required />
+            <span ng-show="form.email.$dirty && form.email.$error.required" class="help-block">Email is Required</span>
+            <span ng-show="form.email.$dirty && form.email.$error.email" class="help-block">Not an Email</span>
+        </div>
+
+        <div class="form-group" ng-class="{ 'has-error': form.password.$dirty && form.password.$error.required }">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" class="form-control" ng-model="vm.password" required />
+            <span ng-show="form.password.$dirty && form.password.$error.required" class="help-block">Password is required</span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary">Login</button>
+            <a href="#!/register" class="btn btn-link">Register</a>
+            <a href="#!/forgotpassword" id="forget-password" onclick="forget()" class="btn btn-link">Forgot Password</a>
+            <div id="gSignIn" style="padding: 20px 0px 0px 0px"></div>
+            <div class="userContent"></div>
+        </div>
+    </form>
+
+    <!-- <form name="form" class="forget-form" ng-submit="vm.forgotpassword()" role="form">
+        <h2>Forgot Password</h2>
+        <div class="form-group" ng-class="{ 'has-error': form.email.$dirty && form.email.$error.required }">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" class="form-control" ng-model="vm.user.email" required />
+            <span ng-show="form.email.$dirty && form.email.$error.required" class="help-block">Required</span>
+            <span ng-show="form.email.$dirty && form.email.$error.email" class="help-block">Not an Email</span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" ng-disabled="form.$invalid" class="btn btn-primary">Submit</button>
+            <a id="back-btn" class="btn btn-link">Back</a>
+        </div>
+    </form> -->
+
+</div>
+
+<meta name="google-signin-client_id" content="958017028296-7thr6m30in0nkv5rb55s3raqrmc9jc1d.apps.googleusercontent.com">
+<script src="https://apis.google.com/js/client:platform.js?onload=renderButton" async defer></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<style type="text/css">
+    .profile{
+        border: 3px solid #B7B7B7;
+        padding: 10px;
+        margin-top: 10px;
+        width: 350px;
+        background-color: #F7F7F7;
+        height: 343px;
+    }
+    .profile p{margin: 0px 0px 10px 0px;}
+    .head{margin-bottom: 10px;}
+    .head a{float: right;}
+    .profile img{width: 100px;float: left;margin: 0px 10px 10px 0px;}
+    .proDetails{float: left;}
+</style>
+
+
+  <script type="text/javascript">
+          function onSuccess(googleUser) {
+            var profile = googleUser.getBasicProfile();
+            gapi.client.load('plus', 'v1', function () {
+                var request = gapi.client.plus.people.get({
+                    'userId': 'me'
+                });
+                //Display the user details
+                request.execute(function (resp) {
+                    var profileHTML = '<div class="profile"><div class="head">Welcome '+resp.name.givenName+'! <a href="javascript:void(0);" onclick="signOut();">Sign out</a></div>';
+                    profileHTML += '<img src="'+resp.image.url+'"/><div class="proDetails"><p>'+resp.displayName+'</p><p>'+resp.emails[0].value+'</p><p>'+resp.gender+'</p><p>'+resp.id+'</p><p><a href="'+resp.url+'">View Google+ Profile</a></p></div></div>';
+                    $('.userContent').html(profileHTML);
+                    $('#gSignIn').slideUp('slow');
+                });
+            });
+        }
+        function onFailure(error) {
+            alert(error);
+        }
+        function renderButton() {
+            gapi.signin2.render('gSignIn', {
+                'scope': 'profile email',
+                'onsuccess': onSuccess,
+                'onfailure': onFailure
+            });
+        }
+        function signOut() {
+            var auth2 = gapi.auth2.getAuthInstance();
+            auth2.signOut().then(function () {
+                $('.userContent').html('');
+                $('#gSignIn').slideDown('slow');
+            });
+        }
+    </script>
+
+<script type="text/javascript">
+   function forget() {
+        jQuery("#forget-password").click(function() {
+            jQuery(".login-form").hide(), jQuery(".forget-form").show()
+        }), 
+        jQuery("#back-btn").click(function() {
+            jQuery(".login-form").show(), jQuery(".forget-form").hide()
+        })
+    };
+</script>
+
+<script type="text/javascript">
+        vm.socialLogin.login = function(){
+        // Clone provider data and add email and password to the request if available
+        var data = angular.copy(vm.socialLogin.providerData);
+        if (vm.email){
+            data.email = vm.email;
+        }
+        if (vm.password){
+            data.password = vm.password;
+        }        
+        if (vm.socialLogin.sendingData){
+            return;
+        }
+        vm.socialLogin.sendingData = true;
+        // We are now in the position to attempt to login the user, system will perform code exchange to obtain a token and will check if the user exists in the system.
+        baasicLoginService.social.post(data.provider, data)
+            .success(function (data) {                
+                vm.isUserLoggedIn = true;
+                vm.message = 'Successful login';  
+                vm.socialLogin.inProgress = false;
+                vm.socialLogin.showCredentials = false;
+                vm.socialLogin.notification = '';                
+            })
+            .error(function (data, status) {
+                var text = 'Could not login user into the system';
+                if (data.error){
+                    text = data.error_description;
+                    if (data.error === 'invalid_grant' || data.error === 'missing_email'){
+                        // Existing user detected in the system, possibly data provided without the user password as well so prompt the user to provide the email and password
+                        vm.socialLogin.showCredentials = true;
+                        text = 'Account already exists please enter your account credentials.';
+                    }                                            
+                }
+                vm.socialLogin.notification = text;
+            }).finally(function(){
+                vm.socialLogin.sendingData = false;
+            });
+    };
+</script>
