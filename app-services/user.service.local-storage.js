@@ -62,8 +62,6 @@
         function Forgot(user) {
             var deferred = $q.defer();
 
-            // simulate api call with $timeout
-            $timeout(function () {
                 GetByEmail(user.email)
                     .then(function (duplicateUser) {
                         if (duplicateUser == null) {
@@ -73,7 +71,7 @@
                             deferred.resolve({ success: true });
                         }
                     });
-            }, 1000);
+
 
             return deferred.promise;
         }
